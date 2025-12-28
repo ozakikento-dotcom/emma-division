@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🐈‍⬛ EMMA Cutie Cats Division Challenge! 🐈‍⬛</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family:"Arial Rounded MT Bold",Arial,sans-serif;
+  background:linear-gradient(180deg,#f3e8ff,#ffffff);
+  text-align:center;
+  padding:20px;
+}
+
+h1{font-size:2.6em;color:#7b4ab2}
+#stats{font-size:1.2em;margin:6px;color:#444}
+
+/* Progress */
+#levelBox{max-width:520px;margin:12px auto}
+#levelText{font-size:1.2em;margin-bottom:6px}
+
+.progress-bg{
+  height:22px;
+  background:#ddd;
+  border-radius:20px;
+  overflow:hidden;
+}
+.progress-bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#c79bff,#8e6adf);
+  transition:width 0.4s ease;
+}
+#nextInfo{font-size:1em;margin-top:4px;color:#555}
+
+#question{font-size:3.2em;margin:16px 0}
+
+#hintBtn{
+  font-size:1.2em;
+  padding:6px 20px;
+  border-radius:20px;
+  border:none;
+  background:#ffe4f2;
+}
+
+.visual-answer{
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.dot-row{display:flex;justify-content:center}
+.dot{
+  width:26px;
+  height:26px;
+  margin:4px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 30%, #ffffff 15%, #ffd6e8 35%, #ff9acb 60%, #c26b98 100%);
+  box-shadow:0 2px 4px rgba(0,0,0,0.15);
+  animation:pulse 1.3s ease-in-out infinite;
+}
+@keyframes pulse{50%{transform:scale(1.15)}}
+
+input{
+  font-size:2.4em;
+  width:220px;
+  text-align:center;
+}
+
+.keypad{
+  display:grid;
+  grid-template-columns:repeat(3,110px);
+  gap:12px;
+  justify-content:center;
+  margin:20px auto;
+}
+
+.keypad button{
+  font-size:2em;
+  padding:20px;
+  border-radius:16px;
+  border:none;
+  background:#fff;
+}
+
+.ok{background:#7ed6a6;color:#fff}
+.clear{background:#f28b8b;color:#fff}
+
+#message{font-size:1.6em;height:1.5em}
+
+/* Stickers */
+#stickerGrid{
+  display:grid;
+  grid-template-columns:repeat(3,180px);
+  gap:20px;
+  justify-content:center;
+  margin-top:20px;
+}
+
+.sticker{
+  width:180px;
+  height:180px;
+  background:#fff;
+  border-radius:26px;
+  border:4px solid #d2b7ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.sticker img{width:170px}
+
+/* Zoom */
+#zoom{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:3000;
+}
+#zoom img{width:90vw;max-width:520px}
+
+/* Level Up */
+#overlay{
+  position:fixed;
+  inset:0;
+  background:radial-gradient(circle,#e6d4ff,#b38cff);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+#overlay h2{
+  font-size:4.8em;
+  color:white;
+  animation:pop 1.2s ease-out;
+}
+@keyframes pop{
+  0%{transform:scale(0.2);opacity:0}
+  60%{transform:scale(1.3)}
+  100%{transform:scale(1)}
+}
+
+#resetBtn{
+  margin-top:20px;
+  font-size:1em;
+  padding:6px 16px;
+  border-radius:12px;
+  border:none;
+  background:#bbb;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🐈‍⬛ EMMA Cutie Cats Division Challenge! 🐈‍⬛</h1>
+
+<div id="stats">
+  Total Correct Answers: <b id="count">0</b>
+</div>
+
+<div id="levelBox">
+  <div id="levelText">Level 1</div>
+  <div class="progress-bg">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+  <div id="nextInfo"></div>
+</div>
+
+<div id="question">?</div>
+<button id="hintBtn" onclick="showHint()">💡 Hint</button>
+
+<div class="visual-answer">
+  <div id="visual"></div>
+  <input id="answer" readonly placeholder="Tap number">
+</div>
+
+<div class="keypad">
+  <button onclick="add(1)">1</button><button onclick="add(2)">2</button><button onclick="add(3)">3</button>
+  <button onclick="add(4)">4</button><button onclick="add(5)">5</button><button onclick="add(6)">6</button>
+  <button onclick="add(7)">7</button><button onclick="add(8)">8</button><button onclick="add(9)">9</button>
+  <button class="clear" onclick="clr()">Clear</button>
+  <button onclick="add(0)">0</button>
+  <button class="ok" onclick="check()">OK</button>
+</div>
+
+<div id="message"></div>
+
+<h2>🏆 My Cutie Cat Stickers</h2>
+<div id="stickerGrid"></div>
+
+<button id="resetBtn" onclick="resetGame()">Reset Progress</button>
+
+<div id="overlay"><h2>LEVEL UP!</h2></div>
+<div id="zoom" onclick="this.style.display='none'"><img></div>
+
+<!-- Sounds -->
+<audio id="meowSound" preload="auto"><source src="meow.mp3"></audio>
+<audio id="meowXSound" preload="auto"><source src="meowx.mp3"></audio>
+
+<script>
+const SAVE_KEY="emma_cats_division_save";
+
+let total=0, level=1, nextLevelAt=20;
+let dividend, divisor, answerValue, hint=false;
+
+/* 50 stickers */
+let remainingStamps=[...Array(50)].map((_,i)=>`cat (${i+1}).png`);
+remainingStamps.sort(()=>Math.random()-0.5);
+let earnedStamps=[];
+
+function saveGame(){
+  localStorage.setItem(SAVE_KEY, JSON.stringify({
+    total, level, nextLevelAt,
+    remainingStamps, earnedStamps
+  }));
+}
+
+function loadGame(){
+  const raw=localStorage.getItem(SAVE_KEY);
+  if(!raw) return;
+  const d=JSON.parse(raw);
+  total=d.total;
+  level=d.level;
+  nextLevelAt=d.nextLevelAt;
+  remainingStamps=d.remainingStamps;
+  earnedStamps=d.earnedStamps;
+  earnedStamps.forEach(addStickerToGrid);
+}
+
+function resetGame(){
+  if(!confirm("Reset all progress?")) return;
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+}
+
+function calcNextLevel(){ nextLevelAt += 20 }
+
+function updateProgress(){
+  const prev = nextLevelAt-20;
+  const pct=Math.min(100,((total-prev)/20)*100);
+  progress.style.width=pct+"%";
+  levelText.textContent="Level "+level;
+  nextInfo.textContent=`Next level in ${nextLevelAt-total} questions`;
+}
+
+/* ===== DIVISION QUESTION ===== */
+function q(){
+  divisor = Math.floor(Math.random()*12)+1;   // 1–12
+  answerValue = Math.floor(Math.random()*12)+1; // quotient 1–12
+  dividend = divisor * answerValue;           // always divisible
+
+  question.textContent = `${dividend} ÷ ${divisor}`;
+  visual.innerHTML="";
+  hint=false;
+  answer.value="";
+}
+
+/* Hint: grouping visualization */
+function showHint(){
+  if(hint) return;
+  hint=true;
+
+  for(let i=0;i<divisor;i++){
+    const r=document.createElement("div");
+    r.className="dot-row";
+    for(let j=0;j<answerValue;j++){
+      const d=document.createElement("div");
+      d.className="dot";
+      r.appendChild(d);
+    }
+    visual.appendChild(r);
+  }
+}
+
+function add(n){ if(answer.value.length<3) answer.value+=n }
+function clr(){ answer.value="" }
+
+function check(){
+  if(+answer.value===answerValue){
+    total++;
+    count.textContent=total;
+    message.textContent="🐾 Meow! Perfect!";
+    meowSound.currentTime=0; meowSound.play();
+
+    if(total===nextLevelAt){
+      level++;
+      levelUp();
+      calcNextLevel();
+    }
+    updateProgress();
+    saveGame();
+    setTimeout(q,600);
+  }else{
+    message.textContent="😺 Try again!";
+    meowXSound.currentTime=0; meowXSound.play();
+  }
+}
+
+function addStickerToGrid(src){
+  const s=document.createElement("div");
+  s.className="sticker";
+  const img=document.createElement("img");
+  img.src=src;
+  img.onclick=()=>{
+    zoom.style.display="flex";
+    zoom.querySelector("img").src=src;
+  };
+  s.appendChild(img);
+  stickerGrid.appendChild(s);
+}
+
+function levelUp(){
+  overlay.style.display="flex";
+  setTimeout(()=>overlay.style.display="none",1200);
+  if(remainingStamps.length===0) return;
+  const src=remainingStamps.shift();
+  earnedStamps.push(src);
+  addStickerToGrid(src);
+  saveGame();
+}
+
+loadGame();
+count.textContent=total;
+updateProgress();
+q();
+</script>
+
+</body>
+</html>
